@@ -149,8 +149,10 @@ class DQN(Agent):
         self.target_update_freq = target_update_freq
         self.batch_size = batch_size
         self.gamma = gamma
+        ###################### ADDED
+        self.epsilon = 0.9 # FOR LUNAR (TESTING PHASE) [0.1 not goood]
+        # self.epsilon = 1.0 # for CARTPOLE
 
-        self.epsilon = 1
         # ######################################### #
         self.saveables.update(
             {
@@ -171,8 +173,22 @@ class DQN(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
+
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        # if lunar have this epsilon decay, else for cartpole have different
+        
+        # pass
+        # FOR LUNAR
+        # a, b = 0.95, 0.4
+        # self.epsilon = 1.0 - min(1.0, timestep / (b * max_timestep)) * a
+
+        self.epsilon = 0.9 - (min(0.9, timestep / (0.07 * max_timestep))) * 0.95
+
+
+        # FOR CARTPOLE
+        # a, b = 0.95, 0.4
+        # self.epsilon = 1.0 - min(1.0, timestep / (b * max_timestep)) * a
+
 
     def act(self, obs: np.ndarray, explore: bool):
         """Returns an action (should be called at every timestep)
@@ -188,7 +204,25 @@ class DQN(Agent):
         :return (sample from self.action_space): action the agent should perform
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        s = torch.from_numpy(np.array([obs])).float()
+        q = self.critics_net(s).detach().numpy()
+
+        if explore and np.random.random() < self.epsilon: 
+            return np.random.choice(q.size) # random action
+        else:
+            return np.argmax(q) # best action
+
+
+        # act_vals = self.critics_net.forward(Tensor(obs))
+        # max_val = torch.max(act_vals)
+        # max_acts = [idx for idx, act_val in enumerate(act_vals) if act_val == max_val]
+        # if explore:
+        #     if np.random.uniform() < self.epsilon:
+        #         return np.random.randint(0, self.action_space.n)
+        #     else:
+        #         return np.random.choice(max_acts)
+        # else:
+        #     return np.random.choice(max_acts)
 
     def update(self, batch: Transition) -> Dict[str, float]:
         """Update function for DQN
@@ -203,9 +237,30 @@ class DQN(Agent):
         :return (Dict[str, float]): dictionary mapping from loss names to loss values
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
-        q_loss = 0.0
-        return {"q_loss": q_loss}
+        self.update_counter += 1
+        # self.critics_optim.zero_grad() # was not commented
+
+        # receive tuples
+        states, actions, next_states, rewards, done = batch
+
+        max_q = self.critics_target(next_states).max(axis=1)[0].detach().unsqueeze(1)
+        y = rewards + (1 - done) * self.gamma * max_q
+        q = self.critics_net(states).gather(dim=1, index=actions.long())
+
+        # compute loss
+        loss = torch.nn.MSELoss()
+        q_loss = loss(y, q) # expected, target
+
+        # perform gradient descent step
+        self.critics_optim.zero_grad() # ADDED
+        q_loss.backward()
+        self.critics_optim.step()
+        
+        # print(self.update_counter, self.target_update_freq)  
+        if self.update_counter % self.target_update_freq == 0:   
+            self.critics_target.hard_update(self.critics_net)
+        
+        return {"q_loss": q_loss.detach()}
 
 
 class Reinforce(Agent):
@@ -259,7 +314,8 @@ class Reinforce(Agent):
         # ############################### #
         # WRITE ANY AGENT PARAMETERS HERE #
         # ############################### #
-
+        self.log_p = []
+        self.epsilon = 0.1 
         # ###############################################
         self.saveables.update(
             {
@@ -279,7 +335,7 @@ class Reinforce(Agent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        self.epsilon = 0.9 - (min(0.9, timestep / (0.07 * max_timesteps))) * 0.95
 
     def act(self, obs: np.ndarray, explore: bool):
         """Returns an action (should be called at every timestep)
@@ -294,7 +350,12 @@ class Reinforce(Agent):
         :return (sample from self.action_space): action the agent should perform
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        s = torch.from_numpy(np.array([obs])).float()
+        probs = self.policy.forward(s)
+        dist = Categorical(probs)
+        a = dist.sample()
+        self.log_p.append(dist.log_prob(a))
+        return a.item()
 
     def update(
         self, rewards: List[float], observations: List[np.ndarray], actions: List[int],
@@ -310,6 +371,17 @@ class Reinforce(Agent):
             losses
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q3")
+        G = 0
         p_loss = 0.0
-        return {"p_loss": p_loss}
+        # for t in reversed(range(len(rewards))): 
+        for t in range(len(rewards)-1, -1, -1):
+            G = rewards[t] + self.gamma * G
+            p_loss -=  G * self.log_p[t]
+
+        p_loss = p_loss / len(rewards)
+        self.policy_optim.zero_grad()
+        p_loss.backward()
+        self.policy_optim.step()
+
+        self.log_p = []
+        return {"p_loss": p_loss}#.detach()

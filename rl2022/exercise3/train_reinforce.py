@@ -14,6 +14,7 @@ CARTPOLE_CONFIG = {
     "eval_episodes": 20,
     "hidden_size": (16, 16),
     "learning_rate": 1e-2,
+    "save_filename": "reinf_cartpole_latest.pt"
 }
 CARTPOLE_CONFIG.update(CARTPOLE_CONSTANTS)
 

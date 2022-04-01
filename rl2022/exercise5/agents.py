@@ -100,7 +100,14 @@ class IndependentQLearningAgents(MultiAgent):
         """
         actions = []
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        for q_table, n_acts in zip(self.q_tables, self.n_acts):
+            act_vals = [q_table[a] for a in range(n_acts)]
+            max_val = max(act_vals)
+            max_acts = [idx for idx, act_val in enumerate(act_vals) if act_val == max_val]
+            if random.random() < self.epsilon:
+                actions.append(random.randint(0, n_acts - 1))
+            else:
+                actions.append(random.choice(max_acts))
         return actions
 
     def learn(
@@ -117,7 +124,12 @@ class IndependentQLearningAgents(MultiAgent):
         """
         updated_values = []
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        for i, (q_table, action, reward, done, n_acts) in enumerate(zip(self.q_tables, actions, rewards, dones, self.n_acts)):
+            old_q = q_table[action]
+            max_q = max([q_table[a] for a in range(n_acts)]) 
+            q_table[action] = old_q + self.learning_rate * (reward + self.gamma * (1 - done) * max_q - old_q)
+            self.q_tables[i] = q_table
+            updated_values.append(q_table[(action)])
         return updated_values
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -132,7 +144,7 @@ class IndependentQLearningAgents(MultiAgent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        self.epsilon = 1.0 - (min(1.0, timestep / (0.07 * max_timestep))) * 0.95
 
 
 class JointActionLearning(MultiAgent):
@@ -177,7 +189,54 @@ class JointActionLearning(MultiAgent):
         """
         joint_action = []
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        # for current_agent in range(self.num_agents):
+        #     # c_obss_agent = self.c_obss[current_agent]
+        #     q_tab = self.q_tables[current_agent]
+        #     model = self.models[current_agent]
+
+        #     if random.random() < self.epsilon:# or self.c_obss[current_agent][0] == 0:
+        #         joint_action.append(random.randint(0, self.n_acts[current_agent] - 1))
+        #     else:
+        #         values = []
+        #         for own_action in range(self.action_spaces[0].n):
+        #             expectation_vals = 0
+        #             for others_action in range(self.action_spaces[0].n):
+        #                 action_key = (own_action, others_action)
+        #                 action_key_alt = (others_action, own_action)
+                        
+        #                 # if c_obss_agent[obss[current_agent]] != 0:
+        #                 if current_agent == 0: #own turn
+        #                     expectation_vals += model[others_action] * q_tab[(action_key)]
+        #                 else:
+        #                     expectation_vals += model[others_action] * q_tab[(action_key_alt)]
+        #                 # else:
+        #                     # expectation_vals = 0
+        #             values.append(expectation_vals)
+        #         action = max(values)
+        #         joint_action.append(action)
+        # return joint_action
+
+
+        for num_agent, (q_table, n_acts) in enumerate(zip(self.q_tables, self.n_acts)):
+            ev = 1
+            # if self.c_obss[i][obs] == 0:
+            if num_agent == 0:
+                ev = 0
+            if random.random() < self.epsilon or ev == 0:
+                joint_action.append(random.randint(0, n_acts - 1))
+            else:
+                j = (num_agent + 1) % 2
+                n_acts_opp = self.n_acts[j]
+                evs = []
+                for action in range(n_acts):
+                    ev_state_action = 0
+                    for action_opp in range(n_acts_opp):
+                        ev_state_action += (self.models[num_agent][action_opp] ) * q_table[(action, action_opp)]
+                    evs.append(ev_state_action)
+                max_ev = max(evs)
+                max_acts = [idx for idx, act_ev in enumerate(evs) if act_ev == max_ev]
+                joint_action.append(random.choice(max_acts))
+
         return joint_action
 
     def learn(
@@ -194,7 +253,27 @@ class JointActionLearning(MultiAgent):
         """
         updated_values = []
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        for i in range(self.num_agents):
+            # obs = obss[i]
+            reward = rewards[i]
+            # n_obs = n_obss[i]
+            done = dones[i]
+            q_table = self.q_tables[i]
+            j = (i + 1) % 2
+            action_opp = actions[j]
+            # self.c_obss[i][obs] += 1 if self.c_obss[i][obs] else 1
+            self.models[i][action_opp] += 1 if self.models[i][action_opp] else 1
+            q_value_old = q_table[tuple(actions)]
+            evs = []
+            for action_next in range(self.n_acts[i]):
+                ev_state_actionNext = 0
+                for action_next_opp in range(self.n_acts[j]):
+                    ev_state_actionNext += (self.models[i][action_next_opp] ) * q_table[(action_next,action_next_opp)]
+                evs.append(ev_state_actionNext)
+            next_best_ev = max(evs) if not done else 0
+            q_table[tuple(actions)] = q_value_old + self.learning_rate * (reward + self.gamma * next_best_ev - q_value_old)
+            self.q_tables[i] = q_table
+            updated_values.append(q_table[tuple(actions)])
         return updated_values
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -209,4 +288,4 @@ class JointActionLearning(MultiAgent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q5")
+        # raise NotImplementedError("Needed for Q5")

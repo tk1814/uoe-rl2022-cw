@@ -117,3 +117,11 @@ def test_jalagents_1():
     dones = [False] * n_agents
 
     agents.learn(action, reward, dones)
+
+if __name__ == '__main__':
+    print('start')
+    test_iqlagents_0()
+    test_iqlagents_1()
+    test_jalagents_0()
+    test_jalagents_1()
+    print('end')

@@ -94,7 +94,8 @@ class DDPG(Agent):
         # ################################################### #
 
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q4")
+        self.m = Normal(0, 0.1 * ACTION_SIZE)
+        # self.epsilon = 1.0
 
         # ############################### #
         # WRITE ANY AGENT PARAMETERS HERE #
@@ -149,8 +150,14 @@ class DDPG(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q4")
+        ### PUT YOUR CODE HERE ### 
+
+        # 10% in pendulum good
+        # self.epsilon = 1.0
+        # self.epsilon = 1.0 - (min(1.0, timestep / (0.7 * max_timesteps))) * 0.95
+        
+        # bipedal
+        # self.epsilon = 1.0 - (min(1.0, timestep / (0.5 * max_timesteps))) * 0.95
 
     def act(self, obs: np.ndarray, explore: bool):
         """Returns an action (should be called at every timestep)
@@ -166,7 +173,28 @@ class DDPG(Agent):
         :return (sample from self.action_space): action the agent should perform
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q4")
+        # s = torch.from_numpy(np.array(obs)).float()
+        # a = self.actor(s).detach().numpy()
+        # noise = [self.m.sample()]
+
+        # rand_a = a + noise
+        # if explore and np.random.random() < self.epsilon:
+        #     return max([-2], min([2], rand_a))
+        # else:
+        #     return a
+        # ^^ ValueError <<
+
+        s = torch.from_numpy(np.array(obs)).float()
+        action = self.actor(s).detach().numpy()
+        noise = self.m.sample().item()
+        
+        if explore: # and np.random.random() < self.epsilon:
+            action += noise
+        
+        action = [max(min(a,2),-2) for a in action]
+        aa = np.clip(action, -2, 2)
+
+        return action 
 
     def update(self, batch: Transition) -> Dict[str, float]:
         """Update function for DQN
@@ -181,10 +209,31 @@ class DDPG(Agent):
         :return (Dict[str, float]): dictionary mapping from loss names to loss values
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q4")
-
         q_loss = 0.0
         p_loss = 0.0
+
+        (states, actions, next_states, rewards, done) = batch ##
+        
+        with torch.no_grad():
+            next_actions = self.actor_target(next_states) ##
+            q_value_next = self.critic_target(torch.cat((next_actions, next_states), dim=1)) ##
+        y = rewards + (1 - done) * self.gamma * q_value_next  ##
+        q = self.critic(torch.cat((actions, states), dim=1))
+
+        loss = torch.nn.MSELoss()
+        q_loss = loss(y, q)
+        self.critic_optim.zero_grad() ##
+        q_loss.backward() ##
+        self.critic_optim.step() ##
+
+        p_loss = -self.critic(torch.cat((self.actor(states), states), dim=1))
+        self.policy_optim.zero_grad()
+        p_loss = p_loss.mean()
+        p_loss.backward()
+        self.policy_optim.step()
+
+        self.critic_target.soft_update(self.critic, self.tau)
+        self.actor_target.soft_update(self.actor, self.tau)
         return {
             "q_loss": q_loss,
             "p_loss": p_loss,

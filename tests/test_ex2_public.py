@@ -65,3 +65,10 @@ def test_montecarlo_0():
     assert type(agent.epsilon) == float
     assert agent.epsilon >= 0.0
     assert agent.epsilon <= 1.0
+
+if __name__ == '__main__':
+    print('start')
+    test_qagent_0()
+    test_qagent_1()
+    test_montecarlo_0()
+    print('end')

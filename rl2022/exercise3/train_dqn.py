@@ -9,36 +9,40 @@ from rl2022.constants import EX3_DQN_CARTPOLE_CONSTANTS as CARTPOLE_CONSTANTS
 from rl2022.constants import EX3_LUNARLANDER_CONSTANTS as LUNARLANDER_CONSTANTS
 from rl2022.exercise3.agents import DQN
 from rl2022.exercise3.replay import ReplayBuffer
+import os
+
+os.environ["SDL_VIDEODRIVER"] = 'x11'
 
 RENDER = False # FALSE FOR FASTER TRAINING / TRUE TO VISUALIZE ENVIRONMENT DURING EVALUATION
 
 LUNARLANDER_CONFIG = {
-    "eval_freq": 5000, # HOW OFTEN WE EVALUATE (AND RENDER IF RENDER=TRUE)
+    "eval_freq": 2000, # 5000 HOW OFTEN WE EVALUATE (AND RENDER IF RENDER=TRUE)
     "eval_episodes": 10,  # DECREASING THIS MIGHT REDUCE EVALUATION ACCURACY; BUT MAKES IT EASIER TO SEE HOW THE POLICY EVOLVES OVER TIME (BY ENABLING RENDER ABOVE)
-    "learning_rate": 1e-2,
-    "hidden_size": (128, 64),
-    "target_update_freq": 5000,
+    "learning_rate": 1e-4, # def: 1e-2, 1e-4 good
+    "hidden_size": (128, 64), # (128, 64)
+    "target_update_freq": 5000, #5000,
     "batch_size": 16,
     "buffer_capacity": int(1e6),
-    "plot_loss": False,
+    "plot_loss": True,
+    "save_filename": "DQN_lunarlander_latest.pt",
 }
 LUNARLANDER_CONFIG.update(LUNARLANDER_CONSTANTS)
 
 CARTPOLE_CONFIG = {
     "eval_freq": 2000,
     "eval_episodes": 20,
-    "learning_rate": 1e-2,
+    "learning_rate": 1e-4, #5e-4 with target update freq 1
     "hidden_size": (128, 64),
-    "target_update_freq": 5000,
+    "target_update_freq": 500, 
     "batch_size": 16,
     "buffer_capacity": int(1e6),
-    "plot_loss": False, # SET TRUE FOR 3.3 (Understanding the Loss)
+    "plot_loss": True, # SET TRUE FOR 3.3 (Understanding the Loss)
+    "save_filename": "DQN_cartpole_latest.pt",
 }
 CARTPOLE_CONFIG.update(CARTPOLE_CONSTANTS)
 
-
-CONFIG = CARTPOLE_CONFIG
-# CONFIG = LUNARLANDER_CONFIG
+# CONFIG = CARTPOLE_CONFIG
+CONFIG = LUNARLANDER_CONFIG
 
 
 def play_episode(
@@ -168,12 +172,12 @@ def train(env: gym.Env, config, output: bool = True) -> Tuple[List[float], List[
         losses = np.array(losses_all)
         x_values = config["batch_size"] + np.arange(len(losses))
         plt.plot(x_values, losses, "-", alpha=0.7)
-        plt.xlabel("Timesteps", fontsize=30)
-        plt.ylabel("DQN Loss", fontsize=30)
-        plt.xticks(fontsize=25)
-        plt.yticks(fontsize=25)
+        plt.xlabel("Timesteps", fontsize=12)
+        plt.ylabel("DQN Loss", fontsize=12)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
         plt.tight_layout(pad=0.3)
-
+        plt.savefig('loss.pdf')
         plt.show()
 
     return np.array(eval_returns_all), np.array(eval_times_all)

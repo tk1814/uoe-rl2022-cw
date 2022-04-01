@@ -16,25 +16,27 @@ PENDULUM_CONFIG = {
     "eval_freq": 2000,
     "eval_episodes": 3,
     "policy_learning_rate": 1e-3,
-    "critic_learning_rate": 1e-3,
+    "critic_learning_rate": 1e-2,
     "critic_hidden_size": [64, 64],
     "policy_hidden_size": [64, 64],
-    "tau": 0.01,
+    "tau": 0.001, # 0.01  # 1e-3 was good
     "batch_size": 64,
     "buffer_capacity": int(1e6),
+    "save_filename": "pendulum_latest.pt"
 }
 PENDULUM_CONFIG.update(PENDULUM_CONSTANTS)
 
 BIPEDAL_CONFIG = {
     "eval_freq": 20000,
     "eval_episodes": 3,
-    "policy_learning_rate": 1e-2,
-    "critic_learning_rate": 1e-2,
+    "policy_learning_rate": 1e-3, # 1e-2
+    "critic_learning_rate": 1e-3, # 1e-2
     "critic_hidden_size": [32, 32],
     "policy_hidden_size": [32, 32],
-    "tau": 0.05,
+    "tau": 0.05, # 0.05
     "batch_size": 32,
     "buffer_capacity": int(1e6),
+    "save_filename": "bipedal_latest.pt"
 }
 BIPEDAL_CONFIG.update(BIPEDAL_CONSTANTS)
 
@@ -153,11 +155,11 @@ def train(env: gym.Env, config, output: bool = True) -> Tuple[List[float], List[
                     # pbar.write(f"Epsilon = {agent.epsilon}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)
-                if eval_returns >= config["target_return"]:
-                    pbar.write(
-                        f"Reached return {eval_returns} >= target return of {config['target_return']}"
-                    )
-                    break
+                # if eval_returns >= config["target_return"]:
+                #     pbar.write(
+                #         f"Reached return {eval_returns} >= target return of {config['target_return']}"
+                #     )
+                #     break
 
     if config["save_filename"]:
         print("Saving to: ", agent.save(config["save_filename"]))

@@ -39,3 +39,10 @@ def test_restore_file():
         **BIPEDAL_CONFIG
     )
     agent.restore("bipedal_latest.pt")
+
+if __name__ == '__main__':
+    print('start')
+    test_imports()
+    test_config()
+    test_restore_file()
+    print('end')

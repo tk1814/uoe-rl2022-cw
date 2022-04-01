@@ -65,4 +65,11 @@ def test_restore_file_0():
     )
     agent.restore("dqn_lunarlander_latest.pt")
 
-
+if __name__ == '__main__':
+    print('start')
+    test_imports_0()
+    test_config_0()
+    test_config_1()
+    test_config_2()
+    test_restore_file_0()
+    print('end')

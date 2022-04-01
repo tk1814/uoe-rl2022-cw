@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 import random
+import numpy as np
 from typing import List, Dict, DefaultDict
 from gym.spaces import Space
 from gym.spaces.utils import flatdim
@@ -53,10 +54,17 @@ class Agent(ABC):
         :param obs (int): received observation representing the current environmental state
         :return (int): index of selected action
         """
+
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        act_vals = [self.q_table[(obs, act)] for act in range(self.n_acts)]
+        max_val = max(act_vals)
+        max_acts = [idx for idx, act_val in enumerate(act_vals) if act_val == max_val]
+
         ### RETURN AN ACTION HERE ###
-        return -1
+        if random.random() < self.epsilon:
+            return random.randint(0, self.n_acts - 1)
+        else:
+            return random.choice(max_acts)
 
     @abstractmethod
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -109,7 +117,10 @@ class QLearningAgent(Agent):
         :return (float): updated Q-value for current observation-action pair
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        next_q = np.argmax([self.q_table[(n_obs, a)] for a in range(self.n_acts)])
+        target = reward + self.gamma * (1 - done) * self.q_table[(n_obs, next_q)]
+        self.q_table[(obs, action)] += self.alpha * (target - self.q_table[(obs, action)])
+        
         return self.q_table[(obs, action)]
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -123,9 +134,8 @@ class QLearningAgent(Agent):
         :param timestep (int): current timestep at the beginning of the episode
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
-        ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
-
+        ### PUT YOUR CODE HERE ### 
+        self.epsilon = 1.0 - (min(1.0, timestep / (0.04 * max_timestep))) * 0.95
 
 class MonteCarloAgent(Agent):
     """
@@ -161,9 +171,24 @@ class MonteCarloAgent(Agent):
         :return (Dict): A dictionary containing the updated Q-value of all the updated state-action pairs
             indexed by the state action pair.
         """
+
         updated_values = {}
+
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        sa = [(obses[i], actions[i]) for i in range(len(obses))]
+        # sa_pairs = set(sa)
+
+        for pair in sa: # was: sa_pairs
+            G = sum([reward * (self.gamma ** i) for i, reward in enumerate(rewards[sa.index(pair):])])
+            
+            if pair not in self.sa_counts.keys():
+                self.sa_counts[pair] = 0
+                
+            # append G to Returns(s,a) and compute average of Returns(s,a)
+            self.q_table[pair] = (self.q_table[pair] * self.sa_counts[pair] + G) / (self.sa_counts[pair] + 1)
+            updated_values[pair] = self.q_table[pair]
+            self.sa_counts[pair] += 1
+
         return updated_values
 
     def schedule_hyperparameters(self, timestep: int, max_timestep: int):
@@ -178,4 +203,5 @@ class MonteCarloAgent(Agent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ###
-        raise NotImplementedError("Needed for Q2")
+        self.epsilon = 0.96 - (min(0.96, timestep / (0.8 * max_timestep))) * 0.9
+        
