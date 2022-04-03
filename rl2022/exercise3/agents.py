@@ -175,19 +175,8 @@ class DQN(Agent):
         """
 
         ### PUT YOUR CODE HERE ###
-        # if lunar have this epsilon decay, else for cartpole have different
-        
-        # pass
-        # FOR LUNAR
-        # a, b = 0.95, 0.4
-        # self.epsilon = 1.0 - min(1.0, timestep / (b * max_timestep)) * a
-
-        self.epsilon = 0.9 - (min(0.9, timestep / (0.07 * max_timestep))) * 0.95
-
-
-        # FOR CARTPOLE
-        # a, b = 0.95, 0.4
-        # self.epsilon = 1.0 - min(1.0, timestep / (b * max_timestep)) * a
+        self.epsilon = 1.0 - (min(1.0, timestep / (0.07 * max_timestep))) * 0.95
+        self.learning_rate = 1.0 - (timestep / (max_timestep + 1))
 
 
     def act(self, obs: np.ndarray, explore: bool):
@@ -237,7 +226,7 @@ class DQN(Agent):
         :return (Dict[str, float]): dictionary mapping from loss names to loss values
         """
         ### PUT YOUR CODE HERE ###
-        self.update_counter += 1
+        self.update_counter += 1 # WAS HERE FOR CARTPOLE
         # self.critics_optim.zero_grad() # was not commented
 
         # receive tuples
@@ -255,10 +244,10 @@ class DQN(Agent):
         self.critics_optim.zero_grad() # ADDED
         q_loss.backward()
         self.critics_optim.step()
-        
-        # print(self.update_counter, self.target_update_freq)  
+         
         if self.update_counter % self.target_update_freq == 0:   
             self.critics_target.hard_update(self.critics_net)
+            # self.update_counter += 1 # WAS NOT HERE FOR CARTPOLE
         
         return {"q_loss": q_loss.detach()}
 
@@ -310,7 +299,7 @@ class Reinforce(Agent):
         # ############################################# #
         self.learning_rate = learning_rate
         self.gamma = gamma
-
+        
         # ############################### #
         # WRITE ANY AGENT PARAMETERS HERE #
         # ############################### #
@@ -336,6 +325,7 @@ class Reinforce(Agent):
         """
         ### PUT YOUR CODE HERE ###
         self.epsilon = 0.9 - (min(0.9, timestep / (0.07 * max_timesteps))) * 0.95
+        self.learning_rate = 1.0 - (timestep / (max_timesteps + 1))
 
     def act(self, obs: np.ndarray, explore: bool):
         """Returns an action (should be called at every timestep)

@@ -5,7 +5,7 @@ from rl2022.exercise3.agents import DQN
 from rl2022.exercise3.train_dqn import LUNARLANDER_CONFIG, play_episode
 
 
-RENDER = True
+RENDER = False
 CONFIG = LUNARLANDER_CONFIG
 
 

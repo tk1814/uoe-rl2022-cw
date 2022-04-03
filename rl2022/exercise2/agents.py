@@ -135,7 +135,9 @@ class QLearningAgent(Agent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ### 
-        self.epsilon = 1.0 - (min(1.0, timestep / (0.04 * max_timestep))) * 0.95
+        self.epsilon = 1.0 - (min(1.0, timestep / (0.07 * max_timestep))) * 0.95
+        self.alpha = 1.0 - (timestep / (max_timestep + 1))
+
 
 class MonteCarloAgent(Agent):
     """
@@ -176,9 +178,8 @@ class MonteCarloAgent(Agent):
 
         ### PUT YOUR CODE HERE ###
         sa = [(obses[i], actions[i]) for i in range(len(obses))]
-        # sa_pairs = set(sa)
 
-        for pair in sa: # was: sa_pairs
+        for pair in sa: 
             G = sum([reward * (self.gamma ** i) for i, reward in enumerate(rewards[sa.index(pair):])])
             
             if pair not in self.sa_counts.keys():
@@ -203,5 +204,5 @@ class MonteCarloAgent(Agent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ###
-        self.epsilon = 0.96 - (min(0.96, timestep / (0.8 * max_timestep))) * 0.9
+        self.epsilon = 0.7 - (min(0.7, timestep/(0.4 * max_timestep)))*0.95
         

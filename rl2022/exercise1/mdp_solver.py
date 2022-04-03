@@ -61,13 +61,6 @@ class ValueIteration(MDPSolver):
     **YOU NEED TO IMPLEMENT FUNCTIONS IN THIS CLASS**
     """
 
-    def _calc_action(self, V, s): 
-        A = np.zeros(self.action_dim)
-        for a in range(self.action_dim):
-            for n, (prob, reward) in enumerate(zip(self.mdp.P[s][a], self.mdp.R[s][a])):
-                A[a] += prob * (reward + self.gamma * V[n])
-        return A
-
     def _calc_value_func(self, theta: float) -> np.ndarray:
         """Calculates the value function
 
@@ -96,7 +89,11 @@ class ValueIteration(MDPSolver):
             delta = 0
             for s in range(self.state_dim):
                 v = V[s]
-                V[s] = max(self._calc_action(V, s))
+                A = np.zeros(self.action_dim)
+                for a in range(self.action_dim):
+                    for n in range(self.state_dim):
+                        A[a] += self.mdp.P[s][a][n] * (self.mdp.R[s][a][n] + self.gamma * V[n])
+                V[s] = max(A)
                 delta = max(delta, abs(V[s] - v))
             if delta < theta:
                 break
@@ -122,7 +119,11 @@ class ValueIteration(MDPSolver):
         policy = np.zeros([self.state_dim, self.action_dim])
         ### PUT YOUR CODE HERE ###
         for s in range(self.state_dim):
-            best_a = np.argmax(self._calc_action(V, s))
+            A = np.zeros(self.action_dim)
+            for a in range(self.action_dim):
+                for n in range(self.state_dim):
+                    A[a] += self.mdp.P[s][a][n] * (self.mdp.R[s][a][n] + self.gamma * V[n])
+            best_a = np.argmax(A)
             policy[s][best_a] = 1.0
         return policy
 
@@ -178,9 +179,9 @@ class PolicyIteration(MDPSolver):
             delta = 0
             for s in range(self.state_dim):
                 v = 0
-                for a, action_prob in enumerate(policy[s]):
-                    for n, (prob, reward) in enumerate(zip(self.mdp.P[s][a], self.mdp.R[s][a])):
-                        v += action_prob * prob * (reward + self.gamma * V[n])
+                for a in range(self.action_dim):
+                    for n in range(self.state_dim):
+                        v += policy[s][a] * self.mdp.P[s][a][n] * (self.mdp.R[s][a][n] + self.gamma * V[n])
                 delta = max(delta, abs(V[s] - v))
                 V[s] = v
             if delta < self.theta:
@@ -209,25 +210,28 @@ class PolicyIteration(MDPSolver):
         policy = np.zeros([self.state_dim, self.action_dim])        
         V = np.zeros([self.state_dim])
 
-        ### PUT YOUR CODE HERE ### Lect.4 slide 17
+        ### PUT YOUR CODE HERE ### Lect.4 slide 17 
+        policy = np.ones([self.state_dim, self.action_dim]) / self.action_dim
         while True:
-            policy_stable = True
             V = self._policy_eval(policy)
+            policy_stable = True
+
             for s in range(self.state_dim):
-                a = np.argmax(policy[s]) # get current deterministic action
-                
+                a = np.argmax(policy[s])
+
                 A = np.zeros(self.action_dim)
                 for a_i in range(self.action_dim):
-                    for n, (prob, reward) in enumerate(zip(self.mdp.P[s][a_i], self.mdp.R[s][a_i])):
-                        A[a_i] += prob * (reward + self.gamma * V[n])
-                p_s = np.argmax(A) 
+                    for n in range(self.state_dim):
+                        A[a_i] += self.mdp.P[s][a_i][n] * (self.mdp.R[s][a_i][n] + self.gamma * V[n])
+                p_s = np.argmax(A)
                 
-                if a != p_s:  
+                if a != p_s:
                     policy_stable = False
-                policy[s] = np.eye(self.action_dim)[p_s]  
+                policy[s] = np.eye(self.action_dim)[p_s]
 
             if policy_stable:
-                return policy, V        
+                break
+        return policy, V
 
     def solve(self, theta: float = 1e-6) -> Tuple[np.ndarray, np.ndarray]:
         """Solves the MDP

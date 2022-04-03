@@ -9,11 +9,20 @@ from rl2022.exercise3.agents import Reinforce
 
 RENDER = False # FALSE FOR FASTER TRAINING / TRUE TO VISUALIZE ENVIRONMENT DURING EVALUATION
 
+    # "eval_freq": 10000,
+    # "eval_episodes": 20,
+    # "hidden_size": (16, 16),
+    # "learning_rate": 1e-2,
+    # "save_filename": "reinf_cartpole_latest.pt"
+
 CARTPOLE_CONFIG = {
     "eval_freq": 10000,
-    "eval_episodes": 20,
-    "hidden_size": (16, 16),
-    "learning_rate": 1e-2,
+    "eval_episodes": 500,
+    "hidden_size": (64,),
+    # "episode_length": 200,
+    "learning_rate": 5e-4,
+    "max_timesteps": 100000,
+    # "gamma": 0.99,
     "save_filename": "reinf_cartpole_latest.pt"
 }
 CARTPOLE_CONFIG.update(CARTPOLE_CONSTANTS)

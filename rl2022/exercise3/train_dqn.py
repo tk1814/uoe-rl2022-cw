@@ -18,31 +18,33 @@ RENDER = False # FALSE FOR FASTER TRAINING / TRUE TO VISUALIZE ENVIRONMENT DURIN
 LUNARLANDER_CONFIG = {
     "eval_freq": 2000, # 5000 HOW OFTEN WE EVALUATE (AND RENDER IF RENDER=TRUE)
     "eval_episodes": 10,  # DECREASING THIS MIGHT REDUCE EVALUATION ACCURACY; BUT MAKES IT EASIER TO SEE HOW THE POLICY EVOLVES OVER TIME (BY ENABLING RENDER ABOVE)
-    "learning_rate": 1e-4, # def: 1e-2, 1e-4 good
-    "hidden_size": (128, 64), # (128, 64)
-    "target_update_freq": 5000, #5000,
-    "batch_size": 16,
+    "max_timesteps": 300000,
+    "learning_rate": 1e-3, 
+    "hidden_size": (128, 64),
+    "target_update_freq": 400, 
+    "batch_size": 80,
     "buffer_capacity": int(1e6),
     "plot_loss": True,
-    "save_filename": "DQN_lunarlander_latest.pt",
+    "save_filename": "dqn_lunarlander_latest.pt",
 }
 LUNARLANDER_CONFIG.update(LUNARLANDER_CONSTANTS)
 
 CARTPOLE_CONFIG = {
     "eval_freq": 2000,
-    "eval_episodes": 20,
-    "learning_rate": 1e-4, #5e-4 with target update freq 1
-    "hidden_size": (128, 64),
-    "target_update_freq": 500, 
-    "batch_size": 16,
+    "eval_episodes": 5,
+    "episode_length": 200,
+    "learning_rate": 5e-4,
+    "max_timesteps": 20000,
+    "hidden_size": (128,),
+    "target_update_freq": 150,
+    "batch_size": 40,
     "buffer_capacity": int(1e6),
-    "plot_loss": True, # SET TRUE FOR 3.3 (Understanding the Loss)
-    "save_filename": "DQN_cartpole_latest.pt",
+    "plot_loss": True, 
 }
 CARTPOLE_CONFIG.update(CARTPOLE_CONSTANTS)
 
-# CONFIG = CARTPOLE_CONFIG
-CONFIG = LUNARLANDER_CONFIG
+CONFIG = CARTPOLE_CONFIG
+# CONFIG = LUNARLANDER_CONFIG
 
 
 def play_episode(
