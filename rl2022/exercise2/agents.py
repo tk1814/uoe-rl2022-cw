@@ -204,5 +204,5 @@ class MonteCarloAgent(Agent):
         :param max_timestep (int): maximum timesteps that the training loop will run for
         """
         ### PUT YOUR CODE HERE ###
-        self.epsilon = 0.7 - (min(0.7, timestep/(0.4 * max_timestep)))*0.95
+        self.epsilon = 0.7 - (min(0.7, timestep/(0.4 * max_timestep))) * 0.95
         

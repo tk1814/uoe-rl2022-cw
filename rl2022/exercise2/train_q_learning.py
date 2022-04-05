@@ -8,9 +8,8 @@ from rl2022.exercise2.utils import evaluate
 CONFIG = {
     "eval_episodes": 500,
     "eval_freq": 1000,
-    "alpha": 0.06, # 0.5 > 0.06 good, 0.05 better smtms
-    # "alpha": 0.05,
-    "epsilon": 0.9, # 0.8
+    "alpha": 0.06,
+    "epsilon": 0.9,
 }
 CONFIG.update(CONSTANTS)
 
