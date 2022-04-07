@@ -1,0 +1,15 @@
+    "eval_freq": 20000,
+    "eval_episodes": 10,
+    "policy_learning_rate": 1e-4, 
+    "critic_learning_rate": 1e-4,
+    "critic_hidden_size": [300,],
+    "policy_hidden_size": [300,],
+    "tau": 0.1,
+    "batch_size": 64, # no 128
+    "buffer_capacity": int(1e6),
+    "episode_length": 300,
+    # "max_timesteps": 100000, default: 400000
+    "gamma": 0.99,
+    "save_filename": "bipedal_latest.pt"
+
+            self.learning_rate = 1.0 - (timestep / (max_timesteps + 1))
